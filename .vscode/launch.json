@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run snapshot",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/out/bastiondtl",
+      "args": ["scenario", "snapshot", "--json"],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false
+    }
+  ]
+}

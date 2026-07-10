@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ms-vscode.cpptools",
+    "oven.bun-vscode",
+    "esbenp.prettier-vscode",
+    "github.vscode-github-actions"
+  ]
+}

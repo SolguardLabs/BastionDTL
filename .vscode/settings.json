@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "out": true,
+    "build": true,
+    "node_modules": true
+  },
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.includePath": ["${workspaceFolder}/src"]
+}

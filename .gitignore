@@ -1,0 +1,12 @@
+/out/
+/build/
+/node_modules/
+/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun.lockb
+.env
+.env.*
+vulnerability.md
+

@@ -1,0 +1,20 @@
+{
+  "name": "bastiondtl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "C++ custody DTL simulator with TypeScript integration tests.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/build.mjs && bun test --timeout 30000 ./tests/node",
+    "ci": "node scripts/build.mjs --warnings && bun test --timeout 30000 ./tests/node",
+    "format:check": "bunx prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
+  },
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=20"
+  }
+}
