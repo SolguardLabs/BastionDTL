@@ -20,6 +20,8 @@ export type ScenarioState = {
   withdrawals: WithdrawalResult[];
   checks: ScenarioCheck[];
   notes: string[];
+  liquidity: LiquidityReport | null;
+  governance: ChangeControlReport | null;
   reconciliation: {
     ok: boolean;
     currentPolicies: number;
@@ -31,6 +33,51 @@ export type ScenarioState = {
     settledReceipts: number;
     totalSupply: number;
   };
+};
+
+export type LiquidityReport = {
+  totalImmediatelyAvailable: number;
+  totalReleasableReserve: number;
+  totalRecoveredInflow: number;
+  totalStressedOutflow: number;
+  totalSurplus: number;
+  totalShortfall: number;
+  coverageBps: number;
+  requirementHhiBps: number;
+  largestRequirementShareBps: number;
+  withinLimits: boolean;
+  digest: string;
+  accounts: Array<{
+    account: string;
+    asset: string;
+    immediatelyAvailable: number;
+    releasableReserve: number;
+    recoveredInflow: number;
+    stressedOutflow: number;
+    surplus: number;
+    shortfall: number;
+    requirementShareBps: number;
+    hhiContributionBps: number;
+  }>;
+};
+
+export type ChangeControlReport = {
+  approvalQuorum: number;
+  cancellationQuorum: number;
+  digest: string;
+  changes: Array<{
+    id: string;
+    target: string;
+    action: string;
+    state: string;
+    predecessor: string;
+    nonce: number;
+    readyAt: number;
+    expiresAt: number;
+    approvalWeight: number;
+    cancellationWeight: number;
+    changeDigest: string;
+  }>;
 };
 
 export type SettlementResult = {

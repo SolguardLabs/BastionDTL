@@ -102,7 +102,7 @@ int run_cli(int argc, char** argv, std::ostream& out, std::ostream& err) {
 
 void write_help(std::ostream& out) {
     out << build_info().display() << "\n";
-    out << "Custody settlement simulator\n\n";
+    out << "Custody settlement service\n\n";
     out << "Usage:\n";
     out << "  bastiondtl scenario <name> [--json]\n";
     out << "  bastiondtl list [--json]\n";

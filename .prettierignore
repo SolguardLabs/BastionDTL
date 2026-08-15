@@ -2,6 +2,5 @@ out/
 build/
 node_modules/
 coverage/
-bun.lock
-vulnerability.md
+/tests/private/
 

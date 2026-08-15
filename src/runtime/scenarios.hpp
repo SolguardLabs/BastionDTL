@@ -1,8 +1,11 @@
 #pragma once
 
+#include "governance/change_control.hpp"
+#include "risk/liquidity.hpp"
 #include "settlement/settlement.hpp"
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -22,6 +25,8 @@ struct ScenarioReport {
     std::vector<WithdrawalResult> withdrawals;
     std::vector<ScenarioCheck> checks;
     std::vector<std::string> notes;
+    std::optional<LiquidityReport> liquidity;
+    std::optional<ChangeControlReport> governance;
 
     ScenarioReport(std::string name, LedgerState ledger_state);
 
@@ -39,6 +44,8 @@ ScenarioReport run_rotation_scenario();
 ScenarioReport run_withdrawals_scenario();
 ScenarioReport run_closure_scenario();
 ScenarioReport run_snapshot_scenario();
+ScenarioReport run_liquidity_scenario();
+ScenarioReport run_governance_scenario();
 
 SettlementReceipt issue_current_receipt(
     LedgerState& ledger,

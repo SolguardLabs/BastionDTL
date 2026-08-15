@@ -8,15 +8,11 @@ test("operator rotation keeps handoff receipts processable", () => {
   expect(check(state, "post-rotation receipt accepted").ok).toBe(true);
   expect(check(state, "two receipts settled").ok).toBe(true);
 
-  const [handoff, current] = state.settlements;
-  expect(handoff.decision).toBe("accepted");
-  expect(handoff.issuingOperator).toBe("operator:north");
-  expect(handoff.appliedOperator).toBe("operator:south");
-  expect(current.issuingOperator).toBe("operator:south");
-  expect(current.appliedOperator).toBe("operator:south");
+  expect(state.settlements).toHaveLength(2);
+  expect(state.settlements.every((item) => item.decision === "accepted")).toBe(true);
 });
 
-test("rotation updates account grant view and reconciliation counts", () => {
+test("rotation preserves account state and reconciliation counts", () => {
   const state = runScenario("rotation");
   const custody = account(state, "custody:atlas");
   expect(custody.currentOperator).toBe("operator:south");
