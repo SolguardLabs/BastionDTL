@@ -24,6 +24,8 @@ const sources = [
   "src/receipt/manifest.cpp",
   "src/settlement/settlement.cpp",
   "src/settlement/batch.cpp",
+  "src/risk/liquidity.cpp",
+  "src/governance/change_control.cpp",
   "src/runtime/scenarios.cpp",
   "src/runtime/version.cpp",
   "src/runtime/cli.cpp",
@@ -56,6 +58,7 @@ function commandExists(command) {
 function findMsvcVcvars() {
   const candidates = [
     "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Auxiliary\\Build\\vcvars64.bat",
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat",

@@ -363,7 +363,7 @@ void LedgerState::require_account_asset_match(const AccountId& left, const Accou
 
 LedgerState make_default_ledger() {
     auto identities = default_identities();
-    LedgerState ledger("bastion-mainnet-sim", AssetId("usdc"), identities);
+    LedgerState ledger("bastion-mainnet", AssetId("usdc"), identities);
 
     ledger.create_account(AccountId("custody:atlas"), AssetId("usdc"), IdentityId("owner:atlas"));
     ledger.create_account(AccountId("custody:forge"), AssetId("usdc"), IdentityId("owner:forge"));

@@ -89,13 +89,34 @@ void ScenarioReport::write_json(JsonWriter& json) const {
     json.key("reconciliation");
     LedgerReconciler reconciler(ledger);
     write_reconciliation_report(json, reconciler.run());
+    json.key("liquidity");
+    if (liquidity.has_value()) {
+        write_liquidity_report(json, *liquidity);
+    } else {
+        json.null();
+    }
+    json.key("governance");
+    if (governance.has_value()) {
+        write_change_control_report(json, *governance);
+    } else {
+        json.null();
+    }
     json.key("ledger");
     ledger.write_json(json);
     json.end_object();
 }
 
 std::vector<std::string> scenario_names() {
-    return {"receipts", "permissions", "rotation", "withdrawals", "closure", "snapshot"};
+    return {
+        "receipts",
+        "permissions",
+        "rotation",
+        "withdrawals",
+        "closure",
+        "snapshot",
+        "liquidity",
+        "governance",
+    };
 }
 
 ScenarioReport run_scenario(std::string_view name) {
@@ -117,6 +138,12 @@ ScenarioReport run_scenario(std::string_view name) {
     }
     if (normalized == "snapshot" || normalized == "state") {
         return run_snapshot_scenario();
+    }
+    if (normalized == "liquidity" || normalized == "risk") {
+        return run_liquidity_scenario();
+    }
+    if (normalized == "governance" || normalized == "changes") {
+        return run_governance_scenario();
     }
     fail("unknown scenario");
 }
@@ -371,6 +398,123 @@ ScenarioReport run_snapshot_scenario() {
         "supply conserved",
         report.ledger.total_supply(report.ledger.native_asset()) == Amount::from_units(1'500'000),
         report.ledger.total_supply(report.ledger.native_asset()).str()
+    );
+    return report;
+}
+
+ScenarioReport run_liquidity_scenario() {
+    auto ledger = make_default_ledger();
+    ScenarioReport report("liquidity", std::move(ledger));
+
+    const std::vector<LiquidityPosition> positions = {
+        LiquidityPosition{
+            AccountId("custody:atlas"),
+            AssetId("usdc"),
+            Amount::from_units(400'000),
+            Amount::from_units(100'000),
+            Amount::from_units(50'000),
+            Amount::from_units(80'000),
+            Amount::from_units(600'000),
+            BasisPoints(8'000),
+            BasisPoints(2'000),
+            BasisPoints(5'000),
+        },
+        LiquidityPosition{
+            AccountId("custody:forge"),
+            AssetId("usdc"),
+            Amount::from_units(500'000),
+            Amount::from_units(80'000),
+            Amount::from_units(20'000),
+            Amount::from_units(100'000),
+            Amount::from_units(300'000),
+            BasisPoints(7'000),
+            BasisPoints(1'000),
+            BasisPoints(5'000),
+        },
+    };
+    const LiquidityLimits limits{
+        BasisPoints(7'000),
+        BasisPoints(6'000),
+        11'000,
+        Amount::zero(),
+    };
+    LiquidityRiskEngine engine;
+    report.liquidity = engine.evaluate(positions, limits);
+    report.add_check(
+        "stressed requirement calculated",
+        report.liquidity->total_stressed_outflow == Amount::from_units(1'050'000),
+        report.liquidity->total_stressed_outflow.str()
+    );
+    report.add_check(
+        "portfolio coverage calculated",
+        report.liquidity->coverage_bps == 10'704,
+        std::to_string(report.liquidity->coverage_bps)
+    );
+    report.add_check(
+        "shortfall surfaced",
+        report.liquidity->total_shortfall == Amount::from_units(206'000),
+        report.liquidity->total_shortfall.str()
+    );
+    report.add_check(
+        "limits enforce escalation",
+        !report.liquidity->within_limits,
+        report.liquidity->digest
+    );
+    return report;
+}
+
+ScenarioReport run_governance_scenario() {
+    auto ledger = make_default_ledger();
+    ScenarioReport report("governance", std::move(ledger));
+    auto identities = default_identities();
+    ChangeControl control(identities, 65, 60);
+    control.configure_reviewer(IdentityId("owner:atlas"), 40);
+    control.configure_reviewer(IdentityId("owner:forge"), 35);
+    control.configure_reviewer(IdentityId("auditor:watch"), 25);
+
+    ChangeRequest request;
+    request.id = "change-risk-42";
+    request.target = "custody-atlas";
+    request.action = "rotate-policy";
+    request.parameter_digest = compact_digest("policy:atlas:epoch-3");
+    request.proposer = IdentityId("treasury:core");
+    request.proposed_at = Epoch(1);
+    request.ready_at = Epoch(3);
+    request.expires_at = Epoch(8);
+    request.nonce = 42;
+
+    control.schedule(request, identities.sign(request.proposer, request.payload()));
+    const auto atlas = IdentityId("owner:atlas");
+    const auto auditor = IdentityId("auditor:watch");
+    control.approve(
+        request.id,
+        identities.sign(atlas, control.approval_payload(request, atlas))
+    );
+    control.approve(
+        request.id,
+        identities.sign(auditor, control.approval_payload(request, auditor))
+    );
+    report.add_check(
+        "delay window enforced",
+        control.state(request.id, Epoch(2)) == ChangeState::Waiting,
+        change_state_name(control.state(request.id, Epoch(2)))
+    );
+    control.execute(request.id, Epoch(3));
+    report.governance = control.report(Epoch(3));
+    report.add_check(
+        "change executed after quorum",
+        report.governance->changes.front().state == "executed",
+        report.governance->changes.front().state
+    );
+    report.add_check(
+        "approval weight retained",
+        report.governance->changes.front().approval_weight == 65,
+        std::to_string(report.governance->changes.front().approval_weight)
+    );
+    report.add_check(
+        "governance digest present",
+        report.governance->digest.size() == 20,
+        report.governance->digest
     );
     return report;
 }

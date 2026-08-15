@@ -3,7 +3,7 @@ import { runCli, runScenario } from "../helpers/runner";
 
 test("help exposes scenario commands", () => {
   const stdout = runCli(["--help"]);
-  expect(stdout).toContain("BastionDTL 0.1.0");
+  expect(stdout).toContain("BastionDTL 1.0.0");
   expect(stdout).toContain("scenario <name>");
   expect(stdout).toContain("rotation");
 });
