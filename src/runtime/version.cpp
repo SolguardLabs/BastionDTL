@@ -25,8 +25,8 @@ std::string BuildInfo::digest() const {
 BuildInfo build_info() {
     BuildInfo info;
     info.name = "BastionDTL";
-    info.version = "1.0.0";
-    info.protocol = "custody-settlement-v1";
+    info.version = "2.0.0";
+    info.protocol = "custody-settlement-v2";
     info.language = "C++20";
     info.features = {
         "segregated-accounts",
@@ -34,6 +34,7 @@ BuildInfo build_info() {
         "signed-receipts",
         "receipt-manifests",
         "batch-settlement",
+        "intraday-reserve-curve",
         "ledger-reconciliation",
         "liquidity-stress",
         "weighted-change-control",

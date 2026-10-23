@@ -74,7 +74,7 @@ void ReceiptEconomicSnapshot::validate() const {
     if (policy_digest.empty()) {
         fail("receipt policy digest is required");
     }
-    if (operator_fee_bps.value() + reserve_bps.value() > 10000) {
+    if (operator_fee_bps.value() + reserve_bps.value() + reserve_curve_bps.value() > 10000) {
         fail("receipt economic rates exceed full amount");
     }
 }
@@ -87,6 +87,7 @@ std::string ReceiptEconomicSnapshot::digest() const {
     builder.field("reserve_account", reserve_account.str());
     builder.field("fee_bps", static_cast<std::uint64_t>(operator_fee_bps.value()));
     builder.field("reserve_bps", static_cast<std::uint64_t>(reserve_bps.value()));
+    builder.field("reserve_curve_bps", static_cast<std::uint64_t>(reserve_curve_bps.value()));
     builder.field("policy_digest", policy_digest);
     builder.field("effective_from", effective_from.value);
     return compact_digest(builder.str());
@@ -167,6 +168,7 @@ SettlementReceipt ReceiptFactory::build(
     snapshot.reserve_account = grant.policy.reserve_account;
     snapshot.operator_fee_bps = grant.policy.operator_fee_bps;
     snapshot.reserve_bps = grant.policy.reserve_bps;
+    snapshot.reserve_curve_bps = grant.policy.reserve_curve_bps;
     snapshot.policy_digest = grant.policy.digest();
     snapshot.effective_from = grant.effective_from;
     snapshot.validate();

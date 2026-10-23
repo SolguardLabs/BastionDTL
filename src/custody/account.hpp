@@ -33,6 +33,7 @@ struct EconomicPolicy {
     PolicyId id;
     BasisPoints operator_fee_bps;
     BasisPoints reserve_bps;
+    BasisPoints reserve_curve_bps;
     Amount receipt_limit;
     Amount daily_limit;
     AccountId fee_account;
@@ -45,6 +46,7 @@ struct EconomicPolicy {
     void validate() const;
     Amount fee_for(Amount amount) const;
     Amount reserve_for(Amount amount) const;
+    Amount reserve_for_tranche(Amount amount) const;
     std::string digest() const;
 };
 

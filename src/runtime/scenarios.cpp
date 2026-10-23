@@ -111,6 +111,7 @@ std::vector<std::string> scenario_names() {
         "receipts",
         "permissions",
         "rotation",
+        "reserves",
         "withdrawals",
         "closure",
         "snapshot",
@@ -129,6 +130,9 @@ ScenarioReport run_scenario(std::string_view name) {
     }
     if (normalized == "rotation" || normalized == "operators") {
         return run_rotation_scenario();
+    }
+    if (normalized == "reserves" || normalized == "intraday") {
+        return run_reserves_scenario();
     }
     if (normalized == "withdrawals" || normalized == "withdraw") {
         return run_withdrawals_scenario();
@@ -260,8 +264,8 @@ ScenarioReport run_rotation_scenario() {
     report.settlements.push_back(old_result);
     report.add_check("pre-rotation receipt accepted", old_result.decision == SettlementDecision::Accepted, old_result.message);
     report.add_check(
-        "current operator recorded",
-        old_result.applied_operator == IdentityId("operator:south"),
+        "issuing operator recorded",
+        old_result.applied_operator == IdentityId("operator:north"),
         old_result.applied_operator.str()
     );
 
@@ -281,6 +285,50 @@ ScenarioReport run_rotation_scenario() {
         report.ledger.receipt_book().settled_count() == 2,
         std::to_string(report.ledger.receipt_book().settled_count())
     );
+    return report;
+}
+
+ScenarioReport run_reserves_scenario() {
+    auto ledger = make_default_ledger();
+    ScenarioReport report("reserves", std::move(ledger));
+    SettlementEngine engine(report.ledger);
+    BatchSettlementProcessor processor(engine);
+    BatchSettlementRequest request;
+    request.batch_id = "atlas-merchant-cycle";
+    request.submitter = IdentityId("operator:north");
+    request.continue_on_error = false;
+
+    for (std::uint64_t index = 0; index < 9; ++index) {
+        request.receipts.push_back(issue_current_receipt(
+            report.ledger,
+            AccountId("custody:atlas"),
+            AccountId("beneficiary:merchant"),
+            Amount::from_units(90'000),
+            Nonce(31'000 + index),
+            "merchant settlement cycle"
+        ));
+    }
+    const auto batch = processor.run(request);
+    report.settlements = batch.results;
+    report.add_check("merchant cycle settled", batch.ok() && batch.accepted == 9, batch.digest());
+    report.add_check(
+        "intraday capacity recorded",
+        report.ledger.settled_gross(AccountId("custody:atlas"), report.ledger.epoch()) == batch.gross,
+        batch.gross.str()
+    );
+    report.add_check(
+        "internal supply conserved",
+        report.ledger.total_supply(report.ledger.native_asset()) == Amount::from_units(1'500'000),
+        report.ledger.total_supply(report.ledger.native_asset()).str()
+    );
+    const auto payout = report.ledger.withdraw(
+        AccountId("beneficiary:merchant"),
+        IdentityId("beneficiary:merchant"),
+        batch.beneficiary_amount,
+        "merchant external payout"
+    );
+    report.withdrawals.push_back(payout);
+    report.add_check("merchant payout completed", payout.ok, payout.message);
     return report;
 }
 

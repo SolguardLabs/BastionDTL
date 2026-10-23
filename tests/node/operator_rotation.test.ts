@@ -10,6 +10,9 @@ test("operator rotation keeps handoff receipts processable", () => {
 
   expect(state.settlements).toHaveLength(2);
   expect(state.settlements.every((item) => item.decision === "accepted")).toBe(true);
+  expect(state.settlements[0].appliedOperator).toBe("operator:north");
+  expect(state.settlements[0].feeAccount).toBe("fees:north");
+  expect(state.settlements[1].appliedOperator).toBe("operator:south");
 });
 
 test("rotation preserves account state and reconciliation counts", () => {

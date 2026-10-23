@@ -71,13 +71,27 @@ SettlementResult SettlementEngine::evaluate(
             fail("insufficient source balance");
         }
 
-        const auto& applied_grant = source.current_grant();
+        const auto& applied_grant = source.grant_for_operator_at(receipt.issued_by, receipt.issued_at);
         const auto& applied_policy = applied_grant.policy;
+        if (applied_grant.operator_id != receipt.economics.operator_id
+            || applied_grant.effective_from != receipt.economics.effective_from
+            || applied_policy.id != receipt.economics.policy_id
+            || applied_policy.fee_account != receipt.economics.fee_account
+            || applied_policy.reserve_account != receipt.economics.reserve_account
+            || applied_policy.operator_fee_bps != receipt.economics.operator_fee_bps
+            || applied_policy.reserve_bps != receipt.economics.reserve_bps
+            || applied_policy.reserve_curve_bps != receipt.economics.reserve_curve_bps) {
+            fail("receipt economics do not match issue grant");
+        }
         if (receipt.terms.lane != applied_policy.settlement_lane) {
             fail("receipt lane is not enabled on account");
         }
         if (receipt.terms.gross_amount > applied_policy.receipt_limit) {
             fail("receipt exceeds active policy limit");
+        }
+        const auto daily_gross = ledger_.settled_gross(result.source_account, ledger_.epoch());
+        if (daily_gross.checked_add(result.gross) > applied_policy.daily_limit) {
+            fail("daily settlement capacity exceeded");
         }
 
         result.applied_operator = applied_grant.operator_id;
@@ -85,7 +99,7 @@ SettlementResult SettlementEngine::evaluate(
         result.fee_account = applied_policy.fee_account;
         result.reserve_account = applied_policy.reserve_account;
         result.operator_fee = applied_policy.fee_for(receipt.terms.gross_amount);
-        result.reserve_amount = applied_policy.reserve_for(receipt.terms.gross_amount);
+        result.reserve_amount = applied_policy.reserve_for_tranche(receipt.terms.gross_amount);
         result.beneficiary_amount = receipt.terms.gross_amount
                                         .checked_sub(result.operator_fee)
                                         .checked_sub(result.reserve_amount);

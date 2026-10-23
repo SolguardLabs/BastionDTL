@@ -13,8 +13,9 @@ protocolo coordina cuentas de custodia, operadores delegados, recibos firmados, 
 comisiones, reservas, reconciliación contable y controles de liquidez. Su interfaz JSON permite
 integrarlo desde procesos de tesorería, sistemas de conciliación y clientes TypeScript.
 
-La versión `1.0.0` incorpora dos planos adicionales: un motor de riesgo de liquidez con escenarios
-de estrés y concentración HHI, y un control de cambios firmado con pesos, quórum, espera mínima,
+La versión `2.0.0` vincula el reparto económico a la política firmada al emitir cada recibo y añade
+capacidad intradía con una curva de reserva. Conserva el motor de riesgo de liquidez con escenarios
+de estrés y concentración HHI, y el control de cambios firmado con pesos, quórum, espera mínima,
 caducidad y encadenamiento de operaciones.
 
 ## Capacidades
@@ -23,6 +24,7 @@ caducidad y encadenamiento de operaciones.
 - roles separados para propietario, tesorería, operador, auditor y beneficiario;
 - recibos con dominio, nonce, ventana temporal, política y firma verificables;
 - liquidación atómica en tres tramos: beneficiario, comisión y reserva;
+- capacidad diaria por cuenta y seguimiento de bruto liquidado en el diario;
 - lotes con manifiesto canónico y digest determinista;
 - rotación operativa, congelación, retirada y cierre de cuentas;
 - reconciliación de suministro, políticas y estados de cuenta;
@@ -91,17 +93,21 @@ flowchart LR
 
 ## Modelo de liquidación
 
-Para un importe bruto `G`, una comisión `f` y una reserva `r`, expresadas en puntos básicos:
+Para un importe bruto `G`, una comisión `f`, una reserva base `r`, una curva `c` y una capacidad
+diaria `D`, expresando tasas en puntos básicos:
 
 ```text
 F = floor(G × f / 10 000)
-R = floor(G × r / 10 000)
+q = floor(G × c / D)
+R = floor(G × r / 10 000) + floor(G × q / 10 000)
 N = G - F - R
 ```
 
 `F` se acredita a la cuenta de comisiones, `R` a la cuenta de reserva y `N` al beneficiario. Las
-operaciones se calculan con enteros, verificación de rango y resta comprobada. El suministro total
-del activo debe permanecer constante durante el movimiento interno.
+operaciones se calculan con enteros, verificación de rango y resta comprobada. El total bruto del
+epoch no puede superar `D`. La política aplicable queda fijada por el grant y el compromiso
+económico firmados al emitir el recibo. El suministro total del activo permanece constante durante
+el movimiento interno.
 
 ```mermaid
 sequenceDiagram
@@ -205,6 +211,7 @@ Escenarios disponibles:
 | `receipts`    | Liquidación de beneficiario, comisión y reserva. |
 | `permissions` | Controles de firma, retirada y congelación.      |
 | `rotation`    | Continuidad durante un cambio de operador.       |
+| `reserves`    | Ciclo intradía y pago externo a un beneficiario. |
 | `withdrawals` | Política de retirada por propietario.            |
 | `closure`     | Cierre controlado de una cuenta vacía.           |
 | `snapshot`    | Lote, manifiesto, diario y reconciliación.       |
@@ -250,6 +257,7 @@ comprobación de integridad entre versión, tag, rama de producción y artefacto
 
 - [Arquitectura](./docs/architecture.md)
 - [Modelo de liquidación](./docs/settlement-model.md)
+- [Reservas intradía](./docs/intraday-reserves.md)
 - [Riesgo de liquidez](./docs/liquidity-risk.md)
 - [Control de cambios](./docs/change-control.md)
 - [Operación](./docs/operations.md)

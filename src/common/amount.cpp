@@ -70,11 +70,9 @@ Amount Amount::checked_mul_bps(std::uint32_t bps) const {
     if (bps > kMaxBps) {
         fail("basis points exceed 10000");
     }
-    const auto value = static_cast<long double>(units_) * static_cast<long double>(bps);
-    if (value > static_cast<long double>(kMaxUnits) * static_cast<long double>(kMaxBps)) {
-        fail("amount bps multiplication overflow");
-    }
-    return Amount(static_cast<std::int64_t>((units_ * static_cast<std::int64_t>(bps)) / kMaxBps));
+    const auto whole = (units_ / kMaxBps) * static_cast<std::int64_t>(bps);
+    const auto fractional = ((units_ % kMaxBps) * static_cast<std::int64_t>(bps)) / kMaxBps;
+    return Amount(whole + fractional);
 }
 
 Amount Amount::min(Amount other) const {
