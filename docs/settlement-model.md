@@ -36,11 +36,13 @@ firmado rompe el contrato de integridad y no se admite.
 
 ## Distribución
 
-Sea `B = 10 000`, `G` el importe bruto, `f` la comisión y `r` la reserva:
+Sea `B = 10 000`, `G` el importe bruto, `f` la comisión, `r` la reserva base, `c` la pendiente de
+reserva y `D` la capacidad diaria de la política:
 
 ```text
 fee         = floor(G × f / B)
-reserve     = floor(G × r / B)
+curveRate   = floor(G × c / D)
+reserve     = floor(G × r / B) + floor(G × curveRate / B)
 beneficiary = G - fee - reserve
 ```
 
@@ -49,7 +51,8 @@ Condiciones previas:
 ```text
 0 ≤ f ≤ B
 0 ≤ r ≤ B
-f + r ≤ B
+f + r + c ≤ B
+settledGross(source, epoch) + G ≤ D
 available(source) ≥ G
 asset(source) = asset(beneficiary) = asset(fee) = asset(reserve)
 ```
@@ -62,12 +65,14 @@ G = beneficiary + fee + reserve
 
 ### Ejemplo
 
-Para `G = 25 000`, `f = 40 bps` y `r = 25 bps`:
+Para `G = 25 000`, `f = 40 bps`, `r = 25 bps`, `c = 1 600 bps` y `D = 1 000 000`:
 
 ```text
 fee         = floor(25 000 × 40 / 10 000) = 100
-reserve     = floor(25 000 × 25 / 10 000) = 62
-beneficiary = 25 000 - 100 - 62             = 24 838
+curveRate   = floor(25 000 × 1 600 / 1 000 000) = 40 bps
+reserve     = floor(25 000 × 25 / 10 000)
+              + floor(25 000 × 40 / 10 000) = 162
+beneficiary = 25 000 - 100 - 162 = 24 738
 ```
 
 No se distribuye el residuo de las divisiones. Permanece en el tramo del beneficiario por
@@ -91,7 +96,9 @@ flowchart TD
     ASSET -- No --> REJECT
     ASSET -- Sí --> BALANCE{"Saldo suficiente"}
     BALANCE -- No --> REJECT
-    BALANCE -- Sí --> MATH["Calcular tramos"]
+    BALANCE -- Sí --> CAPACITY{"Capacidad diaria disponible"}
+    CAPACITY -- No --> REJECT
+    CAPACITY -- Sí --> MATH["Calcular tramos"]
     MATH --> APPLY["Aplicar débito y créditos"]
     APPLY --> RECORD["Registrar nonce y journal"]
     RECORD --> ACCEPT["Accepted"]

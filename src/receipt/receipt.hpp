@@ -41,6 +41,7 @@ struct ReceiptEconomicSnapshot {
     AccountId reserve_account;
     BasisPoints operator_fee_bps;
     BasisPoints reserve_bps;
+    BasisPoints reserve_curve_bps;
     std::string policy_digest;
     Epoch effective_from;
 

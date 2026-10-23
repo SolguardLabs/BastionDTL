@@ -5,6 +5,7 @@ const root = resolve(import.meta.dirname, "..");
 const expectedDocs = [
   "architecture.md",
   "change-control.md",
+  "intraday-reserves.md",
   "liquidity-risk.md",
   "operations.md",
   "runbooks.md",
@@ -69,12 +70,12 @@ if ((readme.match(/```mermaid/g) ?? []).length < 3) {
 }
 
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-if (packageJson.version !== "1.0.0") failures.push("package.json version must be 1.0.0.");
+if (packageJson.version !== "2.0.0") failures.push("package.json version must be 2.0.0.");
 const cmake = readFileSync(join(root, "CMakeLists.txt"), "utf8");
 const versionSource = readFileSync(join(root, "src/runtime/version.cpp"), "utf8");
-if (!cmake.includes("VERSION 1.0.0")) failures.push("CMake version must be 1.0.0.");
-if (!versionSource.includes('info.version = "1.0.0"')) {
-  failures.push("BuildInfo version must be 1.0.0.");
+if (!cmake.includes("VERSION 2.0.0")) failures.push("CMake version must be 2.0.0.");
+if (!versionSource.includes('info.version = "2.0.0"')) {
+  failures.push("BuildInfo version must be 2.0.0.");
 }
 
 function scan(directory) {
@@ -103,4 +104,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Repository contract verified: ${actualDocs.length} docs, version 1.0.0.`);
+console.log(`Repository contract verified: ${actualDocs.length} docs, version 2.0.0.`);

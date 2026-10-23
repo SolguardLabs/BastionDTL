@@ -94,6 +94,7 @@ public:
     void write_json(JsonWriter& json) const;
 
     void remember_settled(const SettlementReceipt& receipt);
+    Amount settled_gross(const AccountId& account, Epoch epoch) const;
     void reject_receipt(const SettlementReceipt& receipt, std::string reason);
     void append(JournalKind kind, AccountId account, IdentityId actor, Amount amount, std::string detail);
 

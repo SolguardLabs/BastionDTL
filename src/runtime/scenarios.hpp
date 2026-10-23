@@ -41,6 +41,7 @@ ScenarioReport run_scenario(std::string_view name);
 ScenarioReport run_receipts_scenario();
 ScenarioReport run_permissions_scenario();
 ScenarioReport run_rotation_scenario();
+ScenarioReport run_reserves_scenario();
 ScenarioReport run_withdrawals_scenario();
 ScenarioReport run_closure_scenario();
 ScenarioReport run_snapshot_scenario();

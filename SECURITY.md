@@ -8,7 +8,8 @@ Este documento define el modelo de confianza, los controles activos y el canal d
 
 | Versión   | Estado           | Actualizaciones de seguridad |
 | --------- | ---------------- | ---------------------------- |
-| `1.0.x`   | Mantenida        | Sí                           |
+| `2.0.x`   | Mantenida        | Sí                           |
+| `1.0.x`   | Histórica        | No                           |
 | `< 1.0.0` | Fuera de soporte | No                           |
 
 Las ramas `main` y `production` deben apuntar a revisiones con CI verde. Los releases se construyen
@@ -83,6 +84,10 @@ flowchart TB
 8. **Suministro:** la suma por activo del libro coincide con el suministro registrado.
 9. **Liquidez:** cobertura, déficit y concentración usan enteros y límites explícitos.
 10. **Gobierno:** una propuesta se ejecuta una vez, tras quórum, espera y predecesor.
+11. **Política de emisión:** operador, cuentas de destino y tasas aplicadas corresponden al
+    compromiso económico firmado por el recibo.
+12. **Capacidad intradía:** el bruto liquidado por cuenta y epoch no supera el límite de la política
+    aplicable.
 
 ## Controles activos
 

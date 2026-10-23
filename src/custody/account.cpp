@@ -52,7 +52,7 @@ void EconomicPolicy::validate() const {
     if (daily_limit.is_zero()) {
         fail("daily limit must be positive");
     }
-    if (operator_fee_bps.value() + reserve_bps.value() > 10000) {
+    if (operator_fee_bps.value() + reserve_bps.value() + reserve_curve_bps.value() > 10000) {
         fail("policy fees exceed full amount");
     }
 }
@@ -65,11 +65,44 @@ Amount EconomicPolicy::reserve_for(Amount amount) const {
     return reserve_bps.apply(amount);
 }
 
+Amount EconomicPolicy::reserve_for_tranche(Amount amount) const {
+    const auto denominator = static_cast<std::uint64_t>(daily_limit.units());
+    const auto numerator = static_cast<std::uint64_t>(amount.units());
+    std::uint64_t quotient = 0;
+    std::uint64_t remainder = 0;
+    std::uint64_t add_quotient = numerator / denominator;
+    std::uint64_t add_remainder = numerator % denominator;
+    auto multiplier = reserve_curve_bps.value();
+    while (multiplier != 0) {
+        if ((multiplier & 1U) != 0U) {
+            quotient += add_quotient;
+            if (remainder >= denominator - add_remainder) {
+                remainder -= denominator - add_remainder;
+                quotient += 1;
+            } else {
+                remainder += add_remainder;
+            }
+        }
+        multiplier >>= 1U;
+        if (multiplier != 0) {
+            add_quotient *= 2;
+            if (add_remainder >= denominator - add_remainder) {
+                add_remainder -= denominator - add_remainder;
+                add_quotient += 1;
+            } else {
+                add_remainder += add_remainder;
+            }
+        }
+    }
+    return reserve_for(amount).checked_add(amount.checked_mul_bps(static_cast<std::uint32_t>(quotient)));
+}
+
 std::string EconomicPolicy::digest() const {
     CanonicalBuilder builder;
     builder.field("id", id.str());
     builder.field("fee_bps", static_cast<std::uint64_t>(operator_fee_bps.value()));
     builder.field("reserve_bps", static_cast<std::uint64_t>(reserve_bps.value()));
+    builder.field("reserve_curve_bps", static_cast<std::uint64_t>(reserve_curve_bps.value()));
     builder.field("receipt_limit", static_cast<std::uint64_t>(receipt_limit.units()));
     builder.field("daily_limit", static_cast<std::uint64_t>(daily_limit.units()));
     builder.field("fee_account", fee_account.str());
@@ -444,6 +477,7 @@ EconomicPolicy default_policy(
     policy.id = PolicyId(policy_id);
     policy.operator_fee_bps = BasisPoints(fee_bps);
     policy.reserve_bps = BasisPoints(reserve_bps);
+    policy.reserve_curve_bps = BasisPoints(1600);
     policy.receipt_limit = Amount::from_units(receipt_limit);
     policy.daily_limit = Amount::from_units(receipt_limit * 10);
     policy.fee_account = std::move(fee_account);

@@ -324,6 +324,16 @@ void LedgerState::remember_settled(const SettlementReceipt& receipt) {
     receipt_book_.remember(receipt);
 }
 
+Amount LedgerState::settled_gross(const AccountId& account_id, Epoch at_epoch) const {
+    Amount total = Amount::zero();
+    for (const auto& event : journal_) {
+        if (event.kind == JournalKind::ReceiptSettle && event.account == account_id && event.epoch == at_epoch) {
+            total = total.checked_add(event.amount);
+        }
+    }
+    return total;
+}
+
 void LedgerState::reject_receipt(const SettlementReceipt& receipt, std::string reason) {
     receipt_book_.reject(receipt, reason);
 }
